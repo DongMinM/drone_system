@@ -1,7 +1,7 @@
 import numpy as np
 import rospy
 
-from drone_system import Status
+from drone_system.msg import Status
 from std_msgs.msg import String
 
 class TrajectoryGenerator:

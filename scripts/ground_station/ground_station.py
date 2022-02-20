@@ -38,6 +38,7 @@ class GroundStation:
         # when the mission recieved is done 
         # print(permission.data)
         self.input_avaliable = permission.data
+        print(self.input_avaliable)
 
 
 
