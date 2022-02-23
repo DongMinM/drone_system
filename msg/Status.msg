@@ -4,7 +4,10 @@ float64 pos_d
 float64 vel_n
 float64 vel_e
 float64 vel_d
+<<<<<<< HEAD
 float64 yaw_ang
 float64 yaw_ang_vel
 bool connection
 
+=======
+>>>>>>> main

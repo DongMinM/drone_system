@@ -122,3 +122,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+scripts/.vscode/browse.vc.db-wal
+
+scripts/.vscode/browse.vc.db
+
+scripts/.vscode/browse.vc.db-shm

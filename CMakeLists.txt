@@ -164,6 +164,11 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/telemetry.py
   scripts/behavior_planner.py
+<<<<<<< HEAD
+=======
+  scripts/trajectory_generator.py
+  scripts/motion_controller.py
+>>>>>>> main
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

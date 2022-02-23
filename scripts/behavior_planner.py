@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 import rospy
 import asyncio
 from fsm            import FSM
+=======
+#!/usr/bin/python3
+import rospy
+from fsm                import FSM
+>>>>>>> main
 from drone_system.msg   import Status
 from std_msgs.msg       import String
 from std_msgs.msg       import Bool
@@ -18,7 +24,11 @@ class BehaviorPlanner:
         # init current state in fsm
         self.cur_state = "disarm"
         # init current mission performing
+<<<<<<< HEAD
         self.mission = None
+=======
+        self.mission = "disarm"
+>>>>>>> main
         # to prevent starting the same mission continuously
         self.transform_trigger = False
         # whether the drone is performing any action
@@ -40,8 +50,14 @@ class BehaviorPlanner:
 
         # if recieved the msg, no action is performing now
         self.is_performing_action = False
+<<<<<<< HEAD
         # if recieved the signal that had done the mission, the trigger turns on
         self.transform_trigger = True
+=======
+
+        # send the input permission since the mission recieved is done        
+        self.pub2ground.publish(True)
+>>>>>>> main
         
 
 
@@ -53,8 +69,11 @@ class BehaviorPlanner:
         self.vel_n, self.vel_e, self.vel_d = \
         telem.vel_n, telem.vel_e, telem.vel_d
 
+<<<<<<< HEAD
         self.yaw_ang, self.yaw_ang_vel = \
         telem.yaw_ang, telem.yaw_ang_vel
+=======
+>>>>>>> main
 
     
 
@@ -75,15 +94,22 @@ class BehaviorPlanner:
         while not rospy.is_shutdown():
 
             FSM().transform_state(self)
+<<<<<<< HEAD
 
             # print(self.cur_state+"             ",end="\r")
+=======
+>>>>>>> main
             self.telem_rate.sleep()
 
         
 
 
 if __name__ == "__main__":
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> main
     rospy.init_node("data_hub")
     
     B = BehaviorPlanner()
