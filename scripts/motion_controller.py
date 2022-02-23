@@ -14,19 +14,22 @@ class MotionController:
         
         rospy.init_node("motion_controller")
         rospy.Subscriber("/motion_msgs",String,self.motion_update)
-        rospy.Subscriber("/trajec_msgs",Float32MultiArray,self.motion_update)
+        rospy.Subscriber("/trajec_msgs",Float32MultiArray,self.velocity_update)
         self.pub2trajec = rospy.Publisher("/trajectory_request",Bool,queue_size=1)
         self.pub2fsm = rospy.Publisher("/is_done",Bool,queue_size=1)
         self.motion_rate = 10 #hz
 
         self.motion_command = None
+        self.velocity_command = None
 
         self.drone = System()
 
     def motion_update(self,motion_command):
-
-       self.motion_command = motion_command.data
-
+        print('motion update')
+        self.motion_command = motion_command.data
+    def velocity_update(self,velocity_command):
+        print('velocity update')
+        self.velocity_command = velocity_command.data
 
     async def connect(self):
 
@@ -72,8 +75,9 @@ class MotionController:
     async def take_off(self):
 
         print("take_off")
+        print(self.velocity_command)
         # await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0,0,-2.0,0))
-        await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(0,0,-2.0,0))
+        # await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(0,0,-2.0,0))
         await asyncio.sleep(5)
 
 
@@ -101,11 +105,11 @@ class MotionController:
 
 
     async def action_handler(self):
-
+        # print(1)
         while not rospy.is_shutdown():
-
+            # print(self.motion_command)
             if self.motion_command != None:
-
+                # print(123)
                 if type(self.motion_command) == str: # if its the simple mission
 
 
@@ -126,7 +130,7 @@ class MotionController:
                     elif self.motion_command == "take_off":
 
                         self.motion_command = None
-                        await self.start_offboard()
+                        # await self.start_offboard()
                         await self.take_off()
                         await self.is_done()
                         
@@ -169,7 +173,7 @@ class MotionController:
 
     async def main(self):
 
-        await self.connect()
+        # await self.connect()
         await self.action_handler()
 
 

@@ -39,6 +39,7 @@ class TrajectoryGenerator:
                 #     self.action = None
                 if self.action == "take_off":
                     self.x_0 = np.array([0,0,5,0,0,0])
+                    self.pub2motion_motion.publish(self.action) 
                     self.generate()
 
                 elif self.action == "park":
@@ -82,7 +83,7 @@ class TrajectoryGenerator:
         B[5,2] = delt
 
         x_0 = self.x_0
-        x_des = np.array([10,10,10,0,0,0])
+        x_des = self.x_des
 
         G = np.zeros((6,3*n))
 
@@ -91,19 +92,24 @@ class TrajectoryGenerator:
         u_hat = sla.lsqr(G,x_des - np.linalg.matrix_power(A,n)@x_0)[0]
 
         u_vec = u_hat
-        u_opt = u_vec.reshape(100,3).T
+        u_opt = u_vec.reshape(n,3).T
         x = np.zeros((6,n+1))
         x[:,0] = x_0
         for t in range(n):
             x[:,t+1] = A.dot(x[:,t]) + B.dot(u_opt[:,t])
         x = x.T
-        print('velo : ', x[:,0:3])
+        # print('velo : ', x[:,3:6])
         
-        if n == 4:
-            self.arrive = 1
-        else:
-            self.arrive = 0
-
+        # if n == 4:
+        #     self.arrive = 1
+        # else:
+        #     self.arrive = 0
+        velocity_list = Float32MultiArray()
+        print(np.reshape(x[0:4,3:6],(1,12)))
+        velocity_list.data = np.reshape(x[0:4,3:6],(1,12))[0]
+        print(velocity_list)
+        self.pub2motion_trajec.publish(velocity_list)
+        self.action = None
 if __name__ == "__main__":
 
     T = TrajectoryGenerator()
