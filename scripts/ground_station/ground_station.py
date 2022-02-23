@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 #!/usr/bin/python3
->>>>>>> main
 import numpy as np
 import rospy
 
@@ -42,10 +39,6 @@ class GroundStation:
         # when the mission recieved is done 
         # print(permission.data)
         self.input_avaliable = permission.data
-<<<<<<< HEAD
-        print(self.input_avaliable)
-=======
->>>>>>> main
 
 
 

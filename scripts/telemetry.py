@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 #!/usr/bin/env python3
->>>>>>> main
 import asyncio
 import numpy as np
 import rospy
@@ -21,11 +18,7 @@ class Telemetry:
         rospy.init_node("telemetry")
         self.pub = rospy.Publisher("/sensor_msgs",Status,queue_size=1)
 
-<<<<<<< HEAD
-        self.rate = BehaviorPlanner().telem_rate
-=======
         self.rate = rospy.Rate(30)
->>>>>>> main
         self.sensor_msgs = Status()
 
 
@@ -34,19 +27,11 @@ class Telemetry:
         # await self.drone.connect(system_address="serial:///dev/ttyUSB0:921600")
         await self.drone.connect(system_address="udp://:14540")
 
-<<<<<<< HEAD
-        print("Connecting ...")
-        async for state in self.drone.core.connection_state():
-            if state.is_connected:
-                print(f"Connected              ",end="\r")
-                break
-=======
         # print("Connecting in telem...")
         # async for state in self.drone.core.connection_state():
         #     if state.is_connected:
         #         print(f"Connected in telem             ",end="\r")
         #         break
->>>>>>> main
         
         async for posvelned in self.drone.telemetry.position_velocity_ned():
             
@@ -56,13 +41,9 @@ class Telemetry:
             self.sensor_msgs.vel_n = posvelned.velocity.north_m_s
             self.sensor_msgs.vel_e = posvelned.velocity.east_m_s
             self.sensor_msgs.vel_d = posvelned.velocity.down_m_s
-<<<<<<< HEAD
-
-=======
             self.sensor_msgs.vel_d = posvelned.velocity.down_m_s
             self.sensor_msgs.vel_d = posvelned.velocity.down_m_s
             print(-posvelned.position.down_m)
->>>>>>> main
             self.pub.publish(self.sensor_msgs)
             self.rate.sleep()    
 
