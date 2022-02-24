@@ -3,7 +3,7 @@ import numpy as np
 import rospy
 import scipy.sparse as ssp
 import scipy.sparse.linalg as sla
-from trajectory_velo_generation import trajectoyu_velo_Gen
+from trajectory_velo_generation import Trajectory_Velocity_Generator
 
 from drone_system.msg import Status
 from std_msgs.msg import String,Float32MultiArray
@@ -37,38 +37,38 @@ class TrajectoryGenerator:
 
     def update_distance(self,x_des):
         self.x_des = x_des
-        self.distance = np.sum((self.x_des-self.x_0)**2)**0.5
+        self.distance = np.sum((self.x_des[0:3]-self.x_0[0:3])**2)**0.5
 
-        if self.gen_number == 0:
+        if self.gen_number == 0:                     ## set total time
 
                 self.Time = round(self.distance*2)
                 self.n = self.Time*10
 
-                if self.Time <= 1:                                                          
-                    self.Time = 1  
+                if self.Time <= 0.4:                                                          
+                    self.Time = 0.4  
                     self.n = self.Time*10
 
 
-    def run(self,data_hub):
+    def run(self):
         while not rospy.is_shutdown():
             if self.action != None:
 
-                if self.action == "arm" and "disarm":
+                if self.action == "arm":
                     print(self.action)
                     self.pub2motion_motion.publish(self.action) 
-                    # if the mission is simple, pass the mission to motion controller
                     self.action = None
 
                 if self.action == "take_off":
 
-                    take_off_altitude = np.array([0,0,self.action[1],0,0,0])
-                    # take_off_altitude = np.array([0,0,5,0,0,0])
-                    self.update_cur_status(data_hub)
-                    self.update_distance(take_off_altitude)
+                    # destination_param = np.array([0,0,self.action[1],0,0,0])
+                    destination_param = np.array([0,0,5,0,0,0])
                     
+                    self.update_distance(destination_param)
+                    trajectory_velocity = Trajectory_Velocity_Generator().run(self)           # [  v0,  v1,  v2,  v3  ] 
+
                     self.pub2motion_motion.publish(self.action)
                     velocity_list = Float32MultiArray()
-                    velocity_list.data = trajectoyu_velo_Gen().run(self)        
+                    velocity_list.data = trajectory_velocity       
                     self.pub2motion_trajec.publish(velocity_list)
                     
                     # self.action = None
