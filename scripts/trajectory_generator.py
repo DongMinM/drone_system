@@ -18,14 +18,28 @@ class TrajectoryGenerator:
         self.pub2motion_trajec = rospy.Publisher("trajec_msgs", Float32MultiArray,queue_size=1)
 
         self.action = None
-        self.x_0 = np.array([0,0,0,0,0,0])
-        self.x_des = np.array([0,0,10,0,0,0])
+        self.x_0 = np.array([0,0,0,0,0,0])                                            # need input
+        self.x_des = np.array([0,0,5,0,0,0])                                          # need input
+
+        self.distance = np.sum((self.x_des-self.x_0)**2)**0.5
+        self.T = round(self.distance*2)                                               
+        if self.T <= 1:                                                          
+            self.T = 1  
+        self.n = self.T*10
+
+        self.gen_number = 1                                                           # slice generation number
+
 
     def action_update(self,action_msgs):
 
         self.action = action_msgs.data
-        print(123)
-        # self.x_0 = 
+
+    def update_distance(self):
+        self.distance = np.sum((self.x_des-self.x_0)**2)**0.5
+
+    def update_state(self,data_hub):            ## need memory connection
+        self.x_0 = np.array([data_hub.pos_n,data_hub.pos_e,data_hub.pos_d,data_hub.vel_n,data_hub.vel_e,data_hub.vel_d])
+
 
 
     def run(self):
@@ -37,10 +51,12 @@ class TrajectoryGenerator:
                 #     self.pub2motion_motion.publish(self.action) 
                 #     # if the mission is simple, pass the mission to motion controller
                 #     self.action = None
+
                 if self.action == "take_off":
-                    self.x_0 = np.array([0,0,5,0,0,0])
-                    self.pub2motion_motion.publish(self.action) 
-                    self.generate()
+                    self.pub2motion_motion.publish(self.action)
+                    # self.update_state()                               ## update x_0 (memory connection)
+                    self.update_distance()                              ## update distance (simple calculation)
+                    self.generate()                                     ## generate trajectory with x_0 (input : x_0 / output : velocity list)
 
                 elif self.action == "park":
 
@@ -50,20 +66,17 @@ class TrajectoryGenerator:
 
                     pass
     
-    def generate(self):
-        distance = np.sum((self.x_des-self.x_0)**2)**0.5
-        T = round(distance*2)
-        if T <= 4:
-            T = 4       
-        n = T*10
-        ts=np.linspace(0,T,n+1)
-        delt = T/n
-        gamma = 0.05
+    def generate(self):             ## input : x_0 by state_update / output : velocity list ,4 front
 
+        x_0 = self.x_0
+        x_des = self.x_des
+  
+
+        delt = self.T/self.n
+        gamma = 0.05
 
         A = np.zeros((6,6))
         B = np.zeros((6,3))
-        C = np.zeros((3,6))
 
         A[0,0] = 1
         A[1,1] = 1
@@ -82,34 +95,38 @@ class TrajectoryGenerator:
         B[4,1] = delt
         B[5,2] = delt
 
-        x_0 = self.x_0
-        x_des = self.x_des
 
-        G = np.zeros((6,3*n))
+        G = np.zeros((6,3*self.n))                                                              # Gu = x_des - (A^n)*(x_0)
 
-        for i in range(n):
-            G[:,3*i:3*(i+1)] = np.linalg.matrix_power(A,max(0,n-i-1))@B
-        u_hat = sla.lsqr(G,x_des - np.linalg.matrix_power(A,n)@x_0)[0]
+        for i in range(self.n):                                                                 ## set G matrix
+            G[:,3*i:3*(i+1)] = np.linalg.matrix_power(A,max(0,self.n-i-1))@B
+        u_hat = sla.lsqr(G,x_des - np.linalg.matrix_power(A,self.n)@x_0)[0]                     # Optimize
 
-        u_vec = u_hat
-        u_opt = u_vec.reshape(n,3).T
-        x = np.zeros((6,n+1))
-        x[:,0] = x_0
-        for t in range(n):
+        u_vec = u_hat                                                                           # save
+        u_opt = u_vec.reshape(self.n,3).T                                                       # reshpae
+        x = np.zeros((6,self.n+1))                                                              # saver
+        x[:,0] = x_0                                                                            # set x_0
+        for t in range(self.n):                                                                 # save [x,y,z,Vx,Vy,Vz]
             x[:,t+1] = A.dot(x[:,t]) + B.dot(u_opt[:,t])
-        x = x.T
-        # print('velo : ', x[:,3:6])
-        
-        # if n == 4:
-        #     self.arrive = 1
-        # else:
-        #     self.arrive = 0
-        velocity_list = Float32MultiArray()
-        print(np.reshape(x[0:4,3:6],(1,12)))
-        velocity_list.data = np.reshape(x[0:4,3:6],(1,12))[0]
-        print(velocity_list)
+        x = x.T                                                                                 # x : [[x0],[x1],[x2]...]
+                                                                                                # xn : [Pos_x,Pox_y,Pos_z,Vel_x,Vel_y,Vel_z]
+
+        velocity_list = Float32MultiArray()                                                     # publish
+        velocity_list.data = np.reshape(x[0:4,3:6],(1,12))[0]                                   ## cutting velocity 4 front
         self.pub2motion_trajec.publish(velocity_list)
-        self.action = None
+
+        print('velo data number {}= '.format(self.gen_number), velocity_list.data.reshape((4,3))[:,2])
+
+        self.x_0 = x[4,:]   # need change ( input / state update )
+
+        if self.T <= 1:                                                                     # last trajectory
+            self.T = 1
+            self.action = None
+        else :
+            self.T -= 0.4
+            self.n -= 4
+            self.gen_number += 1
+
 if __name__ == "__main__":
 
     T = TrajectoryGenerator()
